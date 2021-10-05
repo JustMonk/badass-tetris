@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <link rel="stylesheet" href="./style.css"></link>
+   <title>badass tetris</title>
+</head>
+
+<body>
+   <h3>badass tetris</h3>
+   <div style="margin: 10px;">
+      <div style="width: 20px; height: 20px; background: lightgrey"></div>
+   </div>
+
+   <div class="wrapper">
+
+      <div class="controls">
+         <div>Controls:</div>
+         <div style="display: flex; flex-direction: column;">
+            <button id="start-button">start</button>
+            <button id="log-config-button">canvas config</button>
+            <button id="stop-timer">stop timer</button>
+            <button id="show-state">show state</button>
+         </div>
+         
+
+         <div style="margin-top: 10px;">Stats:</div>
+         <div>Score: <span id="score">0</span></div>
+      </div>
+
+
+      <canvas id="canvas" width="200" height="400" style="border: 1px solid grey;">browser does not support canvas
+         tag</canvas>
+
+   </div>
+
+   <script src="./script.js"></script>
+</body>
+
+</html>

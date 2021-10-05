@@ -1,0 +1,7 @@
+.wrapper {
+   display: flex;
+}
+
+.controls {
+   padding: 10px;
+}
