@@ -24,17 +24,28 @@ class Game {
       this.interval = settings.interval || 1000;
       this.intervalId = null;
 
+      this.createNodes(600);
+
       const canvas = document.getElementById('canvas');
+      this.setupCanvas(canvas)
       const ctx = canvas.getContext('2d');
+
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
+      const padding = canvasHeight / 20;
+      console.log('>> padding: %O', padding);
+      
       const collsCount = 10;
       const rowsCount = 20;
 
-      const blockWidth = canvasWidth / collsCount;
-      const blockHeight = canvasHeight / rowsCount;
+      //const mainAreaHeight = canvasHeight - (padding * 2);
+      const mainAreaHeight = canvasHeight;
+      const mainAreaWidth = mainAreaHeight / 2 + padding;
+      const blockWidth = (mainAreaWidth-padding*2) / collsCount;
+      const blockHeight = (mainAreaHeight-padding*2) / rowsCount;
+      console.log('blockWidth: %o, blockHeight: %o', blockWidth, blockHeight)
 
-      this.canvasConfig = { canvas, ctx, canvasWidth, canvasHeight, collsCount, rowsCount, blockWidth }
+      this.canvasConfig = { canvas, ctx, canvasWidth, canvasHeight, padding, collsCount, rowsCount, blockWidth, blockHeight, mainAreaHeight, mainAreaWidth }
 
       this.currentState = {
          //an object with key-coordinates of the form '3:5' and a value with a color code from COLORS
@@ -42,6 +53,98 @@ class Game {
          activeFigure: null,
          score: 0
       };
+
+      this.controls = {
+         startButtonActive: false
+      }
+
+      canvas.addEventListener('mousemove', (e) => {
+         //TODO: need to set new coords
+         return;
+
+         let x = e.offsetX;
+         let y = e.offsetY;
+
+         //сдвиг
+         //ctx.translate(canvasHeight/2/2 + mainAreaWidth, 0);
+         //координаты
+         //ctx.fillRect(0, 0, mainAreaWidth/2, 30);
+         let startButtonX1 = mainAreaWidth / 2 + mainAreaWidth;
+         let startButtonY1 = 0;
+         let startButtonX2 = startButtonX1 + mainAreaWidth;
+         let startButtonY2 = startButtonY1 + 30;
+         if ((x >= startButtonX1 && x <= startButtonX2) && (y >= startButtonY1 && y <= startButtonY2)) {
+            this.controls.startButtonActive = true;
+            canvas.style.cursor = 'pointer';
+            this.drawControls();
+         }
+         else if (this.controls.startButtonActive) {
+            this.controls.startButtonActive = false;
+            canvas.style.cursor = 'default';
+            this.drawControls();
+         }
+      })
+   }
+
+   //create wrapper & canvases in DOM
+   createNodes(height) {
+      let wrapper = document.createElement('div');
+      wrapper.id = 'game-wrapper';
+      wrapper.style = `position: relative; border: 1px solid grey; width: ${50}px; height: ${height}px`
+
+      let canvas = document.createElement('canvas');
+      canvas.width = '50'; //no matter
+      canvas.height = height;
+      canvas.id = 'canvas';
+      canvas.style = 'position: absolute; z-index: 1;'
+      wrapper.appendChild(canvas);
+
+      let bgCanvas = document.createElement('canvas');
+      bgCanvas.id = 'bg-canvas';
+      canvas.width = '50'; //no matter
+      bgCanvas.height = height;
+      canvas.style = 'position: absolute; z-index: 0;'
+      wrapper.appendChild(bgCanvas);
+
+      document.body.appendChild(wrapper);
+   }
+
+   setupCanvas(canvasNode) {
+      let height = canvasNode.height;
+      canvasNode.width = height;
+
+      //setup bg
+      let bgCanvas = document.getElementById('bg-canvas');
+      bgCanvas.width = canvasNode.width;
+      let bgCtx = bgCanvas.getContext('2d');
+      //bgCtx.globalAlpha = 0.5;
+
+      bgCtx.fillStyle = '#f0f6ff' //'#bbcbe4';
+      //bgCtx.fillStyle = pattern;
+      bgCtx.rect(0, 0, canvasNode.width, canvasNode.height);
+      bgCtx.fill();
+
+      let color1 = '#ffffff' // '#F2EEB3'
+      let color2 = 'rgba(93, 135, 211, 0.15)' //'rgba(70, 118, 205, 0.1)' //'#FF4C65';
+      var numberOfStripes = height;
+      //for (var i = 0; i < numberOfStripes * 2; i++) {
+      for (var i = 0; i < numberOfStripes; i++) {
+         //var thickness = 300 / numberOfStripes;
+         var thickness = 2
+         bgCtx.beginPath();
+         bgCtx.strokeStyle = i % 2 ? color1 : color2;
+         bgCtx.lineWidth = thickness;
+         bgCtx.lineCap = 'round';
+
+         //bgCtx.moveTo(i * thickness + thickness / 2 - 300, 0);
+         bgCtx.moveTo(i * thickness + thickness  - height, 0);
+         bgCtx.lineTo(0 + i * thickness + thickness , height);
+         bgCtx.stroke();
+      }
+      
+      //setup wrapper
+      let wrapper = document.getElementById('game-wrapper');
+      wrapper.style.width = canvasNode.width + 'px';
    }
 
    start() {
@@ -65,43 +168,69 @@ class Game {
       //first render
       this.drawState();
 
+      //controls
+      this.drawControls();
+
       this.intervalId = setInterval(() => {
          this.getNext();
          this.drawState();
       }, this.interval);
    }
 
+   /*-------- MAIN AREA -----------*/
+   setMainArea() {
+      const { ctx, canvasHeight, padding, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
+
+      //just 4 test ; debug area border
+      ctx.save()
+      ctx.translate(canvasHeight / 2 / 2, 0 );
+      ctx.strokeRect(0,0, mainAreaWidth, mainAreaHeight)
+      ctx.restore();
+
+      let mainAreaX0 = canvasHeight / 2 / 2;
+      ctx.translate(mainAreaX0 + padding, 0 + padding);
+   }
+
    drawGrid() {
-      const { ctx, blockWidth, canvasWidth, canvasHeight, rowsCount, collsCount } = this.canvasConfig;
+      const { ctx, blockWidth, blockHeight, canvasWidth, canvasHeight, padding, rowsCount, collsCount, mainAreaHeight, mainAreaWidth } = this.canvasConfig;
+
       ctx.strokeStyle = 'lightgrey'
       ctx.beginPath()
 
-      for (let i = 0; i < collsCount; i++) {
+      for (let i = 0; i <= collsCount; i++) {
          ctx.moveTo(blockWidth * i, 0);
-         ctx.lineTo(blockWidth * i, canvasHeight);
+         ctx.lineTo(blockWidth * i, mainAreaHeight - padding*2);
       }
 
-      for (let i = 0; i < rowsCount; i++) {
-         ctx.moveTo(0, blockWidth * i);
-         ctx.lineTo(canvasWidth, blockWidth * i);
+      for (let i = 0; i <= rowsCount; i++) {
+         ctx.moveTo(0, blockHeight * i);
+         ctx.lineTo(mainAreaWidth - padding*2, blockHeight * i);
       }
-
+      ctx.closePath();
       ctx.stroke();
+
    }
 
    drawState() {
-      const { ctx, blockWidth, canvasWidth, canvasHeight, rowsCount, collsCount } = this.canvasConfig;
-      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+      const { ctx, blockWidth, blockHeight, padding, canvasWidth, canvasHeight, rowsCount, collsCount, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
+      //установка mainArea
+      ctx.save();
+
+      this.drawScore();
+      this.setMainArea();
+
+      ctx.clearRect(0, 0, mainAreaWidth-padding*2, mainAreaHeight-padding*2);
 
       //render active figure
       this.currentState.activeFigure.coords.forEach(coord => {
-         let gradient = ctx.createRadialGradient((coord.x - 1) * blockWidth, (coord.y - 1) * blockWidth, 10, (coord.x - 1) * blockWidth + blockWidth, (coord.y - 1) * blockWidth + blockWidth, 15);
-         gradient.addColorStop(0, adjust(this.currentState.activeFigure.color, 10));
-         gradient.addColorStop(.5, adjust(this.currentState.activeFigure.color, 50));
-         gradient.addColorStop(1, adjust(this.currentState.activeFigure.color, -10));
+         let gradient = ctx.createLinearGradient((coord.x - 1) * blockWidth + blockWidth, (coord.y - 1) * blockHeight, (coord.x - 1) * blockWidth + blockWidth, (coord.y - 1) * blockHeight + blockHeight);
+         gradient.addColorStop(0, adjust(this.currentState.activeFigure.color, 50));
+         gradient.addColorStop(.5, adjust(this.currentState.activeFigure.color, 10));
+         gradient.addColorStop(1, adjust(this.currentState.activeFigure.color, -20));
 
          ctx.fillStyle = gradient;
-         ctx.fillRect((coord.x - 1) * blockWidth, (coord.y - 1) * blockWidth, blockWidth, blockWidth);
+         //ctx.fillStyle = this.currentState.activeFigure.color;
+         ctx.fillRect((coord.x - 1) * blockWidth, (coord.y - 1) * blockHeight, blockWidth, blockHeight);
       });
 
       //render game field
@@ -113,20 +242,70 @@ class Game {
 
       //render grid over field
       this.drawGrid();
+
+      //restore coordinates binding after rendering
+      ctx.restore();
    }
 
    drawField() {
-      const { ctx, blockWidth, canvasWidth, canvasHeight, rowsCount, collsCount } = this.canvasConfig;
+      const { ctx, blockWidth, blockHeight, canvasWidth, canvasHeight, rowsCount, collsCount } = this.canvasConfig;
 
       Object.keys(this.currentState.field).forEach(block => {
-         let gradient = ctx.createRadialGradient((block.split(':')[0] - 1) * blockWidth, (block.split(':')[1] - 1) * blockWidth, 10, (block.split(':')[0] - 1) * blockWidth + blockWidth, (block.split(':')[1] - 1) * blockWidth + blockWidth, 15);
-         gradient.addColorStop(0, adjust(this.currentState.field[block], 10));
-         gradient.addColorStop(.5, adjust(this.currentState.field[block], 50));
-         gradient.addColorStop(1, adjust(this.currentState.field[block], -10));
+         let gradient = ctx.createLinearGradient((block.split(':')[0] - 1) * blockWidth + blockWidth, (block.split(':')[1] - 1) * blockHeight, (block.split(':')[0] - 1) * blockWidth + blockWidth, (block.split(':')[1] - 1) * blockHeight + blockHeight);
+         gradient.addColorStop(0, adjust(this.currentState.field[block], 50));
+         gradient.addColorStop(.5, adjust(this.currentState.field[block], 10));
+         gradient.addColorStop(1, adjust(this.currentState.field[block], -20));
 
          ctx.fillStyle = gradient;
-         ctx.fillRect((block.split(':')[0] - 1) * blockWidth, (block.split(':')[1] - 1) * blockWidth, blockWidth, blockWidth);
+         //ctx.fillStyle = this.currentState.field[block];
+         ctx.fillRect((block.split(':')[0] - 1) * blockWidth, (block.split(':')[1] - 1) * blockHeight, blockWidth, blockHeight);
       });
+   }
+
+   /*------- left side ---------*/
+   drawScore() {
+      const { ctx, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
+      ctx.translate(0, 0);
+      ctx.clearRect(0, 0, mainAreaWidth / 2, mainAreaHeight);
+
+      ctx.font = "14px serif";
+      ctx.textBaseline = "hanging";
+      ctx.fillText(`Score: ${this.currentState.score}`, 10, 10);
+      //ctx.strokeText(`Score: ${this.currentState.score}`, 10, 10);
+   }
+
+   /*------ controls (right side) -------*/
+   setControlsArea() {
+      const { ctx, canvasHeight, padding, mainAreaWidth } = this.canvasConfig;
+      const controlsAreaX0 = canvasHeight / 2 / 2 + mainAreaWidth;
+      ctx.translate(controlsAreaX0 + 100, 0);
+   }
+
+   drawControls() {
+      const { ctx, canvasHeight, padding, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
+      ctx.save();
+
+      const controlsAreaX0 = canvasHeight / 2 / 2 + mainAreaWidth;
+      ctx.translate(controlsAreaX0, 0);
+      //ctx.translate(canvasHeight / 2 / 2 + mainAreaWidth, 0);
+
+      ctx.clearRect(0, 0, mainAreaWidth / 2, mainAreaHeight);
+
+      ctx.beginPath();
+      //render start button
+      //TODO: need to read buttons coords from state (set in constructor)
+
+      if (this.controls.startButtonActive) ctx.fillStyle = '#727272';
+      else ctx.fillStyle = '#dddddd';
+      ctx.fillRect(0, 0, mainAreaWidth / 2, 30);
+
+      ctx.font = "14px serif";
+      ctx.textBaseline = "hanging";
+      ctx.fillStyle = '#000';
+      ctx.fillText(`Start`, 10, 10);
+
+      ctx.closePath();
+      ctx.restore();
    }
 
    //update state, handles movements
@@ -167,7 +346,7 @@ class Game {
       //start from bottom line
       for (let i = this.canvasConfig.rowsCount; i > 1; i--) {
          if (Object.keys(this.currentState.field).filter(val => val.split(':')[1] === `${i}`).length === this.canvasConfig.collsCount) {
-            
+
             //delete a filled row
             let blocks = Object.keys(this.currentState.field);
             blocks.forEach(block => {
