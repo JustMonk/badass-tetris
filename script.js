@@ -54,8 +54,11 @@ class Game {
       let mainAreaSize = {width: mainAreaWidth, height: mainAreaHeight};
       let rightAreaSize = {width: sideAreaWidth, height: sideAreaHeight}
       this.setupCanvas(canvas, leftAreaSize, mainAreaSize, rightAreaSize)
+      
+      const borderSize = sideAreaWidth / 40;
 
       this.canvasConfig = { 
+         borderSize,
          sideAreaWidth, sideAreaHeight,
          canvas, ctx, canvasWidth, 
          canvasHeight, padding, collsCount, 
@@ -196,7 +199,7 @@ class Game {
 
    /*-------- MAIN AREA -----------*/
    setMainArea() {
-      const { ctx, sideAreaWidth, canvasHeight, padding, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
+      const { ctx, sideAreaWidth, borderSize, canvasHeight, padding, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
 
       //just 4 test ; debug area border
       ctx.save()
@@ -209,7 +212,17 @@ class Game {
    }
 
    drawGrid() {
-      const { ctx, blockWidth, blockHeight, canvasWidth, canvasHeight, padding, rowsCount, collsCount, mainAreaHeight, mainAreaWidth } = this.canvasConfig;
+      const { ctx, blockWidth, blockHeight, borderSize, canvasWidth, canvasHeight, padding, rowsCount, collsCount, mainAreaHeight, mainAreaWidth } = this.canvasConfig;
+
+      //set bg
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fillRect(0,0,mainAreaWidth-padding*2,mainAreaHeight-padding*2)
+      
+      ctx.lineWidth = borderSize;
+      ctx.strokeStyle = "#5272ad"
+      ctx.strokeRect(0-borderSize/2,0-borderSize/2, mainAreaWidth-padding*2 + borderSize, mainAreaHeight-padding*2 + borderSize)
+      ctx.restore();
 
       ctx.strokeStyle = 'lightgrey'
       ctx.beginPath()
@@ -236,7 +249,8 @@ class Game {
       this.drawScore();
       this.setMainArea();
 
-      ctx.clearRect(0, 0, mainAreaWidth-padding*2, mainAreaHeight-padding*2);
+      ctx.clearRect(0-padding, 0-padding, mainAreaWidth, mainAreaHeight);
+      //ctx.clearRect(0, 0, mainAreaWidth-padding*2, mainAreaHeight-padding*2);
 
       //render grid over field
       this.drawGrid();
@@ -323,7 +337,7 @@ class Game {
       const { ctx, sideAreaWidth, padding, sideAreaHeight, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
       ctx.save();
 
-      ctx.strokeStyle = '#5d87d3'
+      ctx.strokeStyle = '#5272ad' //'#5d87d3'
       ctx.strokeRect(0,0, sideAreaWidth, sideAreaHeight)
 
       ctx.translate(0 + padding, 0 + padding);
@@ -335,25 +349,27 @@ class Game {
 
       //score border
       ctx.lineWidth = sideAreaWidth / 40;
-      ctx.fillStyle = 'beige'
+      ctx.fillStyle = '#d7deeb'
       ctx.fillRect(0,0,sideAreaWidth-padding*2, fontSize + fontPadding + (fontSize/4))
       ctx.strokeRect(0,0,sideAreaWidth-padding*2, fontSize + fontPadding + (fontSize/4))
       //score text
       ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
       //ctx.font = "19px serif";
       ctx.textBaseline = "top";
-      ctx.fillStyle = 'black'
+      //ctx.fillStyle = 'black'
+      ctx.fillStyle = '#425b8b' //'#6185c7'
       ctx.fillText(`Score: ${this.currentState.score}`, fontPadding, fontSize/2, sideAreaWidth);
 
       //lines border
-      ctx.fillStyle = 'beige'
+      ctx.fillStyle = '#d7deeb'
       ctx.fillRect(0, fontSize + fontPadding + (fontSize/4), sideAreaWidth-padding*2, fontSize + fontPadding + (fontSize/4))
       ctx.strokeRect(0, fontSize + fontPadding + (fontSize/4),sideAreaWidth-padding*2, fontSize + fontPadding + (fontSize/4))
       //lines text
       ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
       //ctx.font = "19px serif";
       ctx.textBaseline = "top";
-      ctx.fillStyle = 'black'
+      //ctx.fillStyle = 'black'
+      ctx.fillStyle = '#425b8b'
       ctx.fillText(`Breaks: ${0}`, fontPadding, fontSize + fontPadding + (fontSize/4) + fontSize/2, sideAreaWidth);
 
       ctx.restore();
