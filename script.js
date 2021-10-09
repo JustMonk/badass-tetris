@@ -27,7 +27,7 @@ class Game {
       this.createNodes(600);
 
       const canvas = document.getElementById('canvas');
-      this.setupCanvas(canvas)
+      //this.setupCanvas(canvas)
       const ctx = canvas.getContext('2d');
 
       const canvasWidth = canvas.width;
@@ -38,6 +38,7 @@ class Game {
       const collsCount = 10;
       const rowsCount = 20;
 
+      //Main area config
       //const mainAreaHeight = canvasHeight - (padding * 2);
       const mainAreaHeight = canvasHeight;
       const mainAreaWidth = mainAreaHeight / 2 + padding;
@@ -45,7 +46,21 @@ class Game {
       const blockHeight = (mainAreaHeight-padding*2) / rowsCount;
       console.log('blockWidth: %o, blockHeight: %o', blockWidth, blockHeight)
 
-      this.canvasConfig = { canvas, ctx, canvasWidth, canvasHeight, padding, collsCount, rowsCount, blockWidth, blockHeight, mainAreaHeight, mainAreaWidth }
+      //Left area config
+      const sideAreaHeight = canvasHeight;
+      const sideAreaWidth = mainAreaWidth / 1.5;
+
+      let leftAreaSize = {width: sideAreaWidth, height: sideAreaHeight};
+      let mainAreaSize = {width: mainAreaWidth, height: mainAreaHeight};
+      let rightAreaSize = {width: sideAreaWidth, height: sideAreaHeight}
+      this.setupCanvas(canvas, leftAreaSize, mainAreaSize, rightAreaSize)
+
+      this.canvasConfig = { 
+         sideAreaWidth, sideAreaHeight,
+         canvas, ctx, canvasWidth, 
+         canvasHeight, padding, collsCount, 
+         rowsCount, blockWidth, blockHeight,
+          mainAreaHeight, mainAreaWidth }
 
       this.currentState = {
          //an object with key-coordinates of the form '3:5' and a value with a color code from COLORS
@@ -90,7 +105,7 @@ class Game {
    createNodes(height) {
       let wrapper = document.createElement('div');
       wrapper.id = 'game-wrapper';
-      wrapper.style = `position: relative; border: 1px solid grey; width: ${50}px; height: ${height}px`
+      wrapper.style = `position: relative; border: 1px solid grey; width: ${50}px; height: ${height}px; font-family: 'Bebas Neue', cursive;`
 
       let canvas = document.createElement('canvas');
       canvas.width = '50'; //no matter
@@ -109,9 +124,11 @@ class Game {
       document.body.appendChild(wrapper);
    }
 
-   setupCanvas(canvasNode) {
+   setupCanvas(canvasNode, leftArea, mainArea, rightArea) {
       let height = canvasNode.height;
-      canvasNode.width = height;
+      //canvasNode.width = height;
+      canvasNode.width = leftArea.width + mainArea.width + rightArea.width;
+      let width = canvasNode.width;
 
       //setup bg
       let bgCanvas = document.getElementById('bg-canvas');
@@ -126,7 +143,7 @@ class Game {
 
       let color1 = '#ffffff' // '#F2EEB3'
       let color2 = 'rgba(93, 135, 211, 0.15)' //'rgba(70, 118, 205, 0.1)' //'#FF4C65';
-      var numberOfStripes = height;
+      var numberOfStripes = width;
       //for (var i = 0; i < numberOfStripes * 2; i++) {
       for (var i = 0; i < numberOfStripes; i++) {
          //var thickness = 300 / numberOfStripes;
@@ -137,8 +154,8 @@ class Game {
          bgCtx.lineCap = 'round';
 
          //bgCtx.moveTo(i * thickness + thickness / 2 - 300, 0);
-         bgCtx.moveTo(i * thickness + thickness  - height, 0);
-         bgCtx.lineTo(0 + i * thickness + thickness , height);
+         bgCtx.moveTo(i * thickness + thickness  - width, 0);
+         bgCtx.lineTo(0 + i * thickness + thickness , width);
          bgCtx.stroke();
       }
       
@@ -179,15 +196,15 @@ class Game {
 
    /*-------- MAIN AREA -----------*/
    setMainArea() {
-      const { ctx, canvasHeight, padding, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
+      const { ctx, sideAreaWidth, canvasHeight, padding, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
 
       //just 4 test ; debug area border
       ctx.save()
-      ctx.translate(canvasHeight / 2 / 2, 0 );
+      ctx.translate(sideAreaWidth, 0 );
       ctx.strokeRect(0,0, mainAreaWidth, mainAreaHeight)
       ctx.restore();
 
-      let mainAreaX0 = canvasHeight / 2 / 2;
+      let mainAreaX0 = sideAreaWidth;
       ctx.translate(mainAreaX0 + padding, 0 + padding);
    }
 
@@ -221,6 +238,9 @@ class Game {
 
       ctx.clearRect(0, 0, mainAreaWidth-padding*2, mainAreaHeight-padding*2);
 
+      //render grid over field
+      this.drawGrid();
+
       //render active figure
       this.currentState.activeFigure.coords.forEach(coord => {
          let gradient = ctx.createLinearGradient((coord.x - 1) * blockWidth + blockWidth, (coord.y - 1) * blockHeight, (coord.x - 1) * blockWidth + blockWidth, (coord.y - 1) * blockHeight + blockHeight);
@@ -231,6 +251,23 @@ class Game {
          ctx.fillStyle = gradient;
          //ctx.fillStyle = this.currentState.activeFigure.color;
          ctx.fillRect((coord.x - 1) * blockWidth, (coord.y - 1) * blockHeight, blockWidth, blockHeight);
+
+         ctx.save();
+         //test border
+         let borderSize = blockWidth / 9;
+         ctx.lineWidth = borderSize
+         ctx.strokeStyle = '#323232';
+         ctx.strokeRect((coord.x - 1) * blockWidth + (borderSize/2), (coord.y - 1) * blockHeight+ (borderSize/2), blockWidth - borderSize, blockHeight- borderSize);
+
+         //block light border
+         //ctx.lineWidth = 3
+         let borderGradient = ctx.createLinearGradient((coord.x - 1) * blockWidth, (coord.y - 1) * blockHeight, (coord.x - 1) * blockWidth + blockWidth, (coord.y - 1) * blockHeight + blockHeight);
+         borderGradient.addColorStop(0, adjust(this.currentState.activeFigure.color, -50));
+         borderGradient.addColorStop(.5, adjust(this.currentState.activeFigure.color, -25));
+         borderGradient.addColorStop(1, adjust(this.currentState.activeFigure.color, -200));
+         ctx.strokeStyle = borderGradient;
+         ctx.strokeRect((coord.x - 1) * blockWidth+borderSize, (coord.y - 1) * blockHeight+borderSize, blockWidth-(borderSize*2), blockHeight-(borderSize*2));
+         ctx.restore();
       });
 
       //render game field
@@ -240,8 +277,7 @@ class Game {
       let scoreText = document.getElementById('score');
       scoreText.textContent = this.currentState.score;
 
-      //render grid over field
-      this.drawGrid();
+      //grid render in 1st step
 
       //restore coordinates binding after rendering
       ctx.restore();
@@ -251,6 +287,9 @@ class Game {
       const { ctx, blockWidth, blockHeight, canvasWidth, canvasHeight, rowsCount, collsCount } = this.canvasConfig;
 
       Object.keys(this.currentState.field).forEach(block => {
+         let blockX = block.split(':')[0];
+         let blockY = block.split(':')[1];
+
          let gradient = ctx.createLinearGradient((block.split(':')[0] - 1) * blockWidth + blockWidth, (block.split(':')[1] - 1) * blockHeight, (block.split(':')[0] - 1) * blockWidth + blockWidth, (block.split(':')[1] - 1) * blockHeight + blockHeight);
          gradient.addColorStop(0, adjust(this.currentState.field[block], 50));
          gradient.addColorStop(.5, adjust(this.currentState.field[block], 10));
@@ -259,37 +298,84 @@ class Game {
          ctx.fillStyle = gradient;
          //ctx.fillStyle = this.currentState.field[block];
          ctx.fillRect((block.split(':')[0] - 1) * blockWidth, (block.split(':')[1] - 1) * blockHeight, blockWidth, blockHeight);
+
+         
+         ctx.save();
+         //test border
+         let borderSize = blockWidth / 9;
+         ctx.lineWidth = borderSize
+         ctx.strokeStyle = '#323232';
+         ctx.strokeRect((blockX - 1) * blockWidth + (borderSize/2), (blockY - 1) * blockHeight+ (borderSize/2), blockWidth-borderSize, blockHeight-borderSize);
+
+         //block light border
+         let borderGradient = ctx.createLinearGradient((blockX - 1) * blockWidth, (blockY - 1) * blockHeight, (blockX - 1) * blockWidth + blockWidth, (blockY - 1) * blockHeight + blockHeight);
+         borderGradient.addColorStop(0, adjust(this.currentState.field[block], -50));
+         borderGradient.addColorStop(.5, adjust(this.currentState.field[block], -25));
+         borderGradient.addColorStop(1, adjust(this.currentState.field[block], -200));
+         ctx.strokeStyle = borderGradient;
+         ctx.strokeRect((blockX - 1) * blockWidth+borderSize, (blockY - 1) * blockHeight+borderSize, blockWidth-(borderSize*2), blockHeight-(borderSize*2));
+         ctx.restore();
       });
    }
 
    /*------- left side ---------*/
    drawScore() {
-      const { ctx, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
-      ctx.translate(0, 0);
-      ctx.clearRect(0, 0, mainAreaWidth / 2, mainAreaHeight);
+      const { ctx, sideAreaWidth, padding, sideAreaHeight, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
+      ctx.save();
 
-      ctx.font = "14px serif";
-      ctx.textBaseline = "hanging";
-      ctx.fillText(`Score: ${this.currentState.score}`, 10, 10);
+      ctx.strokeStyle = '#5d87d3'
+      ctx.strokeRect(0,0, sideAreaWidth, sideAreaHeight)
+
+      ctx.translate(0 + padding, 0 + padding);
+      ctx.clearRect(0, 0,sideAreaWidth, sideAreaHeight - padding*2);
+
+      //define text params
+      let fontSize = sideAreaWidth / 8;
+      let fontPadding = fontSize/2;
+
+      //score border
+      ctx.lineWidth = sideAreaWidth / 40;
+      ctx.fillStyle = 'beige'
+      ctx.fillRect(0,0,sideAreaWidth-padding*2, fontSize + fontPadding + (fontSize/4))
+      ctx.strokeRect(0,0,sideAreaWidth-padding*2, fontSize + fontPadding + (fontSize/4))
+      //score text
+      ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
+      //ctx.font = "19px serif";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = 'black'
+      ctx.fillText(`Score: ${this.currentState.score}`, fontPadding, fontSize/2, sideAreaWidth);
+
+      //lines border
+      ctx.fillStyle = 'beige'
+      ctx.fillRect(0, fontSize + fontPadding + (fontSize/4), sideAreaWidth-padding*2, fontSize + fontPadding + (fontSize/4))
+      ctx.strokeRect(0, fontSize + fontPadding + (fontSize/4),sideAreaWidth-padding*2, fontSize + fontPadding + (fontSize/4))
+      //lines text
+      ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
+      //ctx.font = "19px serif";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = 'black'
+      ctx.fillText(`Breaks: ${0}`, fontPadding, fontSize + fontPadding + (fontSize/4) + fontSize/2, sideAreaWidth);
+
+      ctx.restore();
       //ctx.strokeText(`Score: ${this.currentState.score}`, 10, 10);
    }
 
    /*------ controls (right side) -------*/
-   setControlsArea() {
-      const { ctx, canvasHeight, padding, mainAreaWidth } = this.canvasConfig;
-      const controlsAreaX0 = canvasHeight / 2 / 2 + mainAreaWidth;
-      ctx.translate(controlsAreaX0 + 100, 0);
-   }
-
    drawControls() {
-      const { ctx, canvasHeight, padding, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
+      const { ctx, sideAreaWidth, sideAreaHeight, canvasHeight, padding, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
       ctx.save();
 
-      const controlsAreaX0 = canvasHeight / 2 / 2 + mainAreaWidth;
-      ctx.translate(controlsAreaX0, 0);
+      const controlsAreaX0 = sideAreaWidth + mainAreaWidth;
+
+      //area border for DEBUG
+      ctx.strokeStyle = 'blue';
+      ctx.strokeRect(controlsAreaX0,0, sideAreaWidth, sideAreaHeight);
+
+      ctx.translate(controlsAreaX0, 0 + padding);
       //ctx.translate(canvasHeight / 2 / 2 + mainAreaWidth, 0);
 
-      ctx.clearRect(0, 0, mainAreaWidth / 2, mainAreaHeight);
+      ctx.clearRect(0-5, 0, sideAreaWidth, mainAreaHeight - padding * 2);
+
 
       ctx.beginPath();
       //render start button
@@ -297,9 +383,9 @@ class Game {
 
       if (this.controls.startButtonActive) ctx.fillStyle = '#727272';
       else ctx.fillStyle = '#dddddd';
-      ctx.fillRect(0, 0, mainAreaWidth / 2, 30);
+      ctx.fillRect(0, 0, sideAreaWidth - padding, 30);
 
-      ctx.font = "14px serif";
+      ctx.font = "14px Bebas Neue";
       ctx.textBaseline = "hanging";
       ctx.fillStyle = '#000';
       ctx.fillText(`Start`, 10, 10);
