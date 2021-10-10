@@ -49,16 +49,19 @@ class Game {
       //Left area config
       const sideAreaHeight = canvasHeight;
       const sideAreaWidth = mainAreaWidth / 1.5;
+      const fontSize = sideAreaWidth / 8;
+      const fontPadding = fontSize/2;
+      const scoreBlockHeight = fontSize + fontPadding + (fontSize/4);
+      const borderSize = sideAreaWidth / 40;
 
       let leftAreaSize = {width: sideAreaWidth, height: sideAreaHeight};
       let mainAreaSize = {width: mainAreaWidth, height: mainAreaHeight};
       let rightAreaSize = {width: sideAreaWidth, height: sideAreaHeight}
       this.setupCanvas(canvas, leftAreaSize, mainAreaSize, rightAreaSize)
       
-      const borderSize = sideAreaWidth / 40;
-
       this.canvasConfig = { 
-         borderSize,
+         borderSize, fontSize, fontPadding,
+         scoreBlockHeight,
          sideAreaWidth, sideAreaHeight,
          canvas, ctx, canvasWidth, 
          canvasHeight, padding, collsCount, 
@@ -69,7 +72,9 @@ class Game {
          //an object with key-coordinates of the form '3:5' and a value with a color code from COLORS
          field: {},
          activeFigure: null,
-         score: 0
+         nextFigure: null,
+         score: 0,
+         breaks: 0
       };
 
       this.controls = {
@@ -171,10 +176,12 @@ class Game {
       console.log('start init');
 
       //reset state
+      //TODO: перезаписывать отдельные ключи, а не стейт целиком
       this.currentState = {
          field: {},
          activeFigure: null,
-         score: 0
+         score: 0,
+         breaks: 0
       };
       if (this.intervalId) {
          clearInterval(this.intervalId);
@@ -182,6 +189,7 @@ class Game {
       }
 
       this.currentState.activeFigure = this.createRandomFigure();
+      this.currentState.nextFigure = this.createRandomFigure();
 
       document.addEventListener('keydown', (e) => this.moveFigure(e));
 
@@ -334,7 +342,7 @@ class Game {
 
    /*------- left side ---------*/
    drawScore() {
-      const { ctx, sideAreaWidth, padding, sideAreaHeight, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
+      const { ctx, sideAreaWidth, padding, sideAreaHeight, mainAreaWidth, mainAreaHeight, blockWidth, blockHeight } = this.canvasConfig;
       ctx.save();
 
       ctx.strokeStyle = '#5272ad' //'#5d87d3'
@@ -346,12 +354,13 @@ class Game {
       //define text params
       let fontSize = sideAreaWidth / 8;
       let fontPadding = fontSize/2;
+      let scoreBlockHeight = fontSize + fontPadding + (fontSize/4);
 
       //score border
       ctx.lineWidth = sideAreaWidth / 40;
       ctx.fillStyle = '#d7deeb'
-      ctx.fillRect(0,0,sideAreaWidth-padding*2, fontSize + fontPadding + (fontSize/4))
-      ctx.strokeRect(0,0,sideAreaWidth-padding*2, fontSize + fontPadding + (fontSize/4))
+      ctx.fillRect(0,0,sideAreaWidth-padding, fontSize + fontPadding + (fontSize/4))
+      ctx.strokeRect(0,0,sideAreaWidth-padding, fontSize + fontPadding + (fontSize/4))
       //score text
       ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
       //ctx.font = "19px serif";
@@ -362,18 +371,68 @@ class Game {
 
       //lines border
       ctx.fillStyle = '#d7deeb'
-      ctx.fillRect(0, fontSize + fontPadding + (fontSize/4), sideAreaWidth-padding*2, fontSize + fontPadding + (fontSize/4))
-      ctx.strokeRect(0, fontSize + fontPadding + (fontSize/4),sideAreaWidth-padding*2, fontSize + fontPadding + (fontSize/4))
+      ctx.fillRect(0, fontSize + fontPadding + (fontSize/4), sideAreaWidth-padding, fontSize + fontPadding + (fontSize/4))
+      ctx.strokeRect(0, fontSize + fontPadding + (fontSize/4),sideAreaWidth-padding, fontSize + fontPadding + (fontSize/4))
       //lines text
       ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
       //ctx.font = "19px serif";
       ctx.textBaseline = "top";
       //ctx.fillStyle = 'black'
       ctx.fillStyle = '#425b8b'
-      ctx.fillText(`Breaks: ${0}`, fontPadding, fontSize + fontPadding + (fontSize/4) + fontSize/2, sideAreaWidth);
+      ctx.fillText(`Breaks: ${this.currentState.breaks}`, fontPadding, fontSize + fontPadding + (fontSize/4) + fontSize/2, sideAreaWidth);
+
+      //next figure block
+      ctx.fillStyle = '#d7deeb'
+      ctx.fillRect(0, scoreBlockHeight * 3, sideAreaWidth-padding, scoreBlockHeight*3)
+      ctx.strokeRect(0, scoreBlockHeight * 3, sideAreaWidth-padding, scoreBlockHeight*3)
+
+      //set coords for next figure block
+      let poinsSortedByX = this.currentState.nextFigure.coords.map(val => val.x).sort();
+      let poinsSortedByY = this.currentState.nextFigure.coords.map(val => val.y).sort();
+      let figureMiddleX = (poinsSortedByX[poinsSortedByX.length-1] - poinsSortedByX[0] + 1) * blockWidth / 2;
+      let figureMiddleY = (poinsSortedByY[poinsSortedByX.length-1] - poinsSortedByY[0] + 1) * blockHeight / 2;
+
+      let areaMiddleX = (sideAreaWidth-padding) / 2;
+      let areaMiddleY = (scoreBlockHeight*3) / 2;
+
+      //TODO: Корявое позиционирование по Y
+      //ctx.translate(areaMiddleX - figureMiddleX , scoreBlockHeight * 3 + (scoreBlockHeight * 3 / 2 - blockHeight /2));
+      // /*v2*/ ctx.translate(areaMiddleX - figureMiddleX, scoreBlockHeight * 3 + areaMiddleY - figureMiddleY /2)
+      ctx.translate(areaMiddleX - figureMiddleX, scoreBlockHeight * 3 + areaMiddleY - figureMiddleY );
+
+      this.currentState.nextFigure.coords.forEach(coord => {
+         let gradient = ctx.createLinearGradient((coord.x - 1) * blockWidth + blockWidth, (coord.y - 1) * blockHeight, (coord.x - 1) * blockWidth + blockWidth, (coord.y - 1) * blockHeight + blockHeight);
+         gradient.addColorStop(0, adjust(this.currentState.nextFigure.color, 50));
+         gradient.addColorStop(.5, adjust(this.currentState.nextFigure.color, 10));
+         gradient.addColorStop(1, adjust(this.currentState.nextFigure.color, -20));
+
+         ctx.fillStyle = gradient;
+         //ctx.fillStyle = this.currentState.activeFigure.color;
+         ctx.fillRect((coord.x  - poinsSortedByX[0]) * blockWidth, (coord.y - 1) * blockHeight, blockWidth, blockHeight);
+
+         ctx.save();
+         //test border
+         let borderSize = blockWidth / 9;
+         ctx.lineWidth = borderSize
+         ctx.strokeStyle = '#323232';
+         ctx.strokeRect((coord.x - poinsSortedByX[0]) * blockWidth + (borderSize/2), (coord.y - 1) * blockHeight+ (borderSize/2), blockWidth - borderSize, blockHeight- borderSize);
+
+         //block light border
+         //ctx.lineWidth = 3
+         let borderGradient = ctx.createLinearGradient((coord.x - poinsSortedByX[0]) * blockWidth, (coord.y - 1) * blockHeight, (coord.x - poinsSortedByX[0]) * blockWidth + blockWidth, (coord.y - 1) * blockHeight + blockHeight);
+         borderGradient.addColorStop(0, adjust(this.currentState.nextFigure.color, -50));
+         borderGradient.addColorStop(.5, adjust(this.currentState.nextFigure.color, -25));
+         borderGradient.addColorStop(1, adjust(this.currentState.nextFigure.color, -200));
+         ctx.strokeStyle = borderGradient;
+         ctx.strokeRect((coord.x - poinsSortedByX[0]) * blockWidth+borderSize, (coord.y - 1) * blockHeight+borderSize, blockWidth-(borderSize*2), blockHeight-(borderSize*2));
+         ctx.restore();
+      });
+      
+      //calibrate point
+      //ctx.strokeStyle = 'black';
+      //ctx.strokeRect(0,0, 25,25)
 
       ctx.restore();
-      //ctx.strokeText(`Score: ${this.currentState.score}`, 10, 10);
    }
 
    /*------ controls (right side) -------*/
@@ -428,7 +487,9 @@ class Game {
             nextState.field[`${coord.x}:${coord.y}`] = nextState.activeFigure.color;
          });
 
-         nextState.activeFigure = this.createRandomFigure();
+         //nextState.activeFigure = this.createRandomFigure();
+         nextState.activeFigure = nextState.nextFigure;
+         nextState.nextFigure = this.createRandomFigure();
 
          //endgame check
          let isStacked = nextState.activeFigure.coords.some(coord => this.checkCollision(coord.x, coord.y));
@@ -455,6 +516,7 @@ class Game {
                if (block.split(':')[1] === `${i}`) delete this.currentState.field[block]; //(!) this (':')[1] its sting type
             });
             this.currentState.score += 100;
+            this.currentState.breaks += 1;
 
             //copy current field
             let fieldWithOffset = Object.assign({}, this.currentState.field);
@@ -554,6 +616,7 @@ class Game {
 
       //pool of available figures
       const figuresList = [figures.line, figures.square, figures.tetraL, figures.tetraLInverse, figures.tetraZ, figures.tetraS, figures.tetraT];
+      //const figuresList = [figures.line]
 
       //not beauty but it ok
       let figure = figuresList[randomInteger(0, figuresList.length - 1)];
