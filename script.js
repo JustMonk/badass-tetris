@@ -83,30 +83,53 @@ class Game {
 
       canvas.addEventListener('mousemove', (e) => {
          //TODO: need to set new coords
-         return;
 
          let x = e.offsetX;
          let y = e.offsetY;
 
-         //сдвиг
-         //ctx.translate(canvasHeight/2/2 + mainAreaWidth, 0);
-         //координаты
-         //ctx.fillRect(0, 0, mainAreaWidth/2, 30);
-         let startButtonX1 = mainAreaWidth / 2 + mainAreaWidth;
-         let startButtonY1 = 0;
-         let startButtonX2 = startButtonX1 + mainAreaWidth;
-         let startButtonY2 = startButtonY1 + 30;
-         if ((x >= startButtonX1 && x <= startButtonX2) && (y >= startButtonY1 && y <= startButtonY2)) {
-            this.controls.startButtonActive = true;
-            canvas.style.cursor = 'pointer';
-            this.drawControls();
-         }
-         else if (this.controls.startButtonActive) {
-            this.controls.startButtonActive = false;
-            canvas.style.cursor = 'default';
-            this.drawControls();
-         }
+         this.checkStartButtonHover(x,y);
+         this.checkQuitButtonHover(x,y);
       })
+   }
+
+   checkStartButtonHover(x,y) {
+      const {sideAreaWidth, mainAreaWidth, padding, scoreBlockHeight, canvas} = this.canvasConfig;
+
+      let startButtonX1 = sideAreaWidth + mainAreaWidth;
+      let startButtonY1 = padding;
+      let startButtonX2 = startButtonX1 + (sideAreaWidth-padding);
+      let startButtonY2 = startButtonY1 + scoreBlockHeight;
+
+      if ((x >= startButtonX1 && x <= startButtonX2) && (y >= startButtonY1 && y <= startButtonY2)) {
+         this.controls.startButtonActive = true;
+         canvas.style.cursor = 'pointer';
+         this.drawControls();
+      }
+      else if (this.controls.startButtonActive) {
+         this.controls.startButtonActive = false;
+         canvas.style.cursor = 'default';
+         this.drawControls();
+      }
+   }
+
+   checkQuitButtonHover(x,y) {
+      const {sideAreaWidth, mainAreaWidth, padding, scoreBlockHeight, canvas} = this.canvasConfig;
+
+      let quitButtonX1 = sideAreaWidth + mainAreaWidth;
+      let quitButtonY1 = scoreBlockHeight + padding/2 + padding;
+      let quitButtonX2 = quitButtonX1 + (sideAreaWidth-padding);
+      let quitButtonY2 = quitButtonY1 + scoreBlockHeight;
+
+      if ((x >= quitButtonX1 && x <= quitButtonX2) && (y >= quitButtonY1 && y <= quitButtonY2)) {
+         this.controls.quitButtonActive = true;
+         canvas.style.cursor = 'pointer';
+         this.drawControls();
+      }
+      else if (this.controls.quitButtonActive) {
+         this.controls.quitButtonActive = false;
+         canvas.style.cursor = 'default';
+         this.drawControls();
+      }
    }
 
    //create wrapper & canvases in DOM
@@ -255,6 +278,10 @@ class Game {
       ctx.save();
 
       this.drawScore();
+
+      //temp
+      this.drawControls();
+
       this.setMainArea();
 
       ctx.clearRect(0-padding, 0-padding, mainAreaWidth, mainAreaHeight);
@@ -342,7 +369,7 @@ class Game {
 
    /*------- left side ---------*/
    drawScore() {
-      const { ctx, sideAreaWidth, padding, sideAreaHeight, mainAreaWidth, mainAreaHeight, blockWidth, blockHeight } = this.canvasConfig;
+      const { ctx, sideAreaWidth, padding, borderSize, sideAreaHeight, mainAreaWidth, mainAreaHeight, blockWidth, blockHeight } = this.canvasConfig;
       ctx.save();
 
       ctx.strokeStyle = '#5272ad' //'#5d87d3'
@@ -359,8 +386,8 @@ class Game {
       //score border
       ctx.lineWidth = sideAreaWidth / 40;
       ctx.fillStyle = '#d7deeb'
-      ctx.fillRect(0,0,sideAreaWidth-padding, fontSize + fontPadding + (fontSize/4))
-      ctx.strokeRect(0,0,sideAreaWidth-padding, fontSize + fontPadding + (fontSize/4))
+      ctx.fillRect(0,0,sideAreaWidth-padding - borderSize, fontSize + fontPadding + (fontSize/4))
+      ctx.strokeRect(0,0,sideAreaWidth-padding - borderSize, fontSize + fontPadding + (fontSize/4))
       //score text
       ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
       //ctx.font = "19px serif";
@@ -371,8 +398,8 @@ class Game {
 
       //lines border
       ctx.fillStyle = '#d7deeb'
-      ctx.fillRect(0, fontSize + fontPadding + (fontSize/4), sideAreaWidth-padding, fontSize + fontPadding + (fontSize/4))
-      ctx.strokeRect(0, fontSize + fontPadding + (fontSize/4),sideAreaWidth-padding, fontSize + fontPadding + (fontSize/4))
+      ctx.fillRect(0, fontSize + fontPadding + (fontSize/4), sideAreaWidth-padding - borderSize, fontSize + fontPadding + (fontSize/4))
+      ctx.strokeRect(0, fontSize + fontPadding + (fontSize/4),sideAreaWidth-padding - borderSize, fontSize + fontPadding + (fontSize/4))
       //lines text
       ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
       //ctx.font = "19px serif";
@@ -383,8 +410,8 @@ class Game {
 
       //next figure block
       ctx.fillStyle = '#d7deeb'
-      ctx.fillRect(0, scoreBlockHeight * 3, sideAreaWidth-padding, scoreBlockHeight*3)
-      ctx.strokeRect(0, scoreBlockHeight * 3, sideAreaWidth-padding, scoreBlockHeight*3)
+      ctx.fillRect(0, scoreBlockHeight * 3, sideAreaWidth-padding - borderSize, scoreBlockHeight*3)
+      ctx.strokeRect(0, scoreBlockHeight * 3, sideAreaWidth-padding - borderSize, scoreBlockHeight*3)
 
       //set coords for next figure block
       let poinsSortedByX = this.currentState.nextFigure.coords.map(val => val.x).sort();
@@ -392,7 +419,7 @@ class Game {
       let figureMiddleX = (poinsSortedByX[poinsSortedByX.length-1] - poinsSortedByX[0] + 1) * blockWidth / 2;
       let figureMiddleY = (poinsSortedByY[poinsSortedByX.length-1] - poinsSortedByY[0] + 1) * blockHeight / 2;
 
-      let areaMiddleX = (sideAreaWidth-padding) / 2;
+      let areaMiddleX = (sideAreaWidth-padding-borderSize) / 2;
       let areaMiddleY = (scoreBlockHeight*3) / 2;
 
       //TODO: Корявое позиционирование по Y
@@ -437,7 +464,7 @@ class Game {
 
    /*------ controls (right side) -------*/
    drawControls() {
-      const { ctx, sideAreaWidth, sideAreaHeight, canvasHeight, padding, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
+      const { ctx, sideAreaWidth, scoreBlockHeight, borderSize, fontSize, fontPadding, sideAreaHeight, canvasHeight, padding, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
       ctx.save();
 
       const controlsAreaX0 = sideAreaWidth + mainAreaWidth;
@@ -446,26 +473,49 @@ class Game {
       ctx.strokeStyle = 'blue';
       ctx.strokeRect(controlsAreaX0,0, sideAreaWidth, sideAreaHeight);
 
-      ctx.translate(controlsAreaX0, 0 + padding);
+      ctx.translate(controlsAreaX0 + borderSize, 0 + padding);
       //ctx.translate(canvasHeight / 2 / 2 + mainAreaWidth, 0);
 
-      ctx.clearRect(0-5, 0, sideAreaWidth, mainAreaHeight - padding * 2);
+      ctx.clearRect(0, 0, sideAreaWidth, mainAreaHeight - padding * 2);
 
 
-      ctx.beginPath();
-      //render start button
+      //ctx.beginPath();
+
+      //render start/pause button
       //TODO: need to read buttons coords from state (set in constructor)
+      if (this.controls.startButtonActive) ctx.fillStyle = adjust('#d7deeb', -50);
+      else ctx.fillStyle = '#d7deeb';
 
-      if (this.controls.startButtonActive) ctx.fillStyle = '#727272';
-      else ctx.fillStyle = '#dddddd';
-      ctx.fillRect(0, 0, sideAreaWidth - padding, 30);
-
-      ctx.font = "14px Bebas Neue";
-      ctx.textBaseline = "hanging";
+      //start button border
+      ctx.lineWidth = borderSize;
+      ctx.strokeStyle = '#5272ad' //'#5d87d3'
+      ctx.fillRect(0,0,sideAreaWidth-padding, scoreBlockHeight)
+      ctx.strokeRect(0,0,sideAreaWidth-padding, scoreBlockHeight)
+      //>> start button text
+      ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
+      ctx.textBaseline = "top";
+      ctx.textAlign = "center";
       ctx.fillStyle = '#000';
-      ctx.fillText(`Start`, 10, 10);
+      //ctx.fillText(`Start`, fontPadding, fontPadding, sideAreaWidth);
+      ctx.fillText(`Start`, (sideAreaWidth/2 + fontPadding) - padding, fontPadding, sideAreaWidth);
 
-      ctx.closePath();
+      //quit button
+      if (this.controls.quitButtonActive) ctx.fillStyle = adjust('#d7deeb', -50);
+      else ctx.fillStyle = '#d7deeb';
+      //quitButton border
+      ctx.strokeStyle = '#5272ad' //'#5d87d3'
+      ctx.fillRect(0,scoreBlockHeight + padding/2, sideAreaWidth-padding, scoreBlockHeight)
+      ctx.strokeRect(0,scoreBlockHeight + padding/2, sideAreaWidth-padding, scoreBlockHeight)
+      //>> quit button text
+      ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
+      ctx.textBaseline = "top";
+      ctx.textAlign = "center";
+      ctx.fillStyle = '#000';
+      //ctx.fillText(`Start`, fontPadding, fontPadding, sideAreaWidth);
+      ctx.fillText(`Exit`, (sideAreaWidth/2 + fontPadding) - padding, fontPadding + scoreBlockHeight + padding/2, sideAreaWidth);
+
+
+      //ctx.closePath();
       ctx.restore();
    }
 
