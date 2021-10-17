@@ -74,11 +74,13 @@ class Game {
          activeFigure: null,
          nextFigure: null,
          score: 0,
-         breaks: 0
+         breaks: 0,
+         gameOver: false
       };
 
       this.controls = {
-         startButtonActive: false
+         startButtonActive: false,
+         quitButtonActive: false
       }
 
       canvas.addEventListener('mousemove', (e) => {
@@ -90,6 +92,25 @@ class Game {
          this.checkStartButtonHover(x,y);
          this.checkQuitButtonHover(x,y);
       });
+
+      canvas.addEventListener('click', (e) => {
+         e.preventDefault();
+         e.stopPropagation();
+         e.cancelBubble = true;
+         if (this.controls.startButtonActive) this.startButtonClick();
+         else if (this.controls.quitButtonActive) this.quitButtonClick();
+         return false;
+      });
+
+      document.fonts.ready.then(() => {
+         // Any operation that needs to be done only after all the fonts
+         // have finished loading can go here.
+         this.drawScore();
+         this.drawState();
+         this.drawControls();
+       });
+
+       this.moveFigure = this.moveFigure.bind(this);
    }
 
    checkStartButtonHover(x,y) {
@@ -132,11 +153,52 @@ class Game {
       }
    }
 
+   startButtonClick() {
+      console.log('start button click handler');
+      if (!this.intervalId && !this.currentState.activeFigure) this.start();
+      else if (this.intervalId) {
+         //pause
+         clearInterval(this.intervalId);
+         this.intervalId = null;
+      } else if (!this.intervalId && !this.currentState.gameOver) {
+         //resume
+         this.intervalId = setInterval(() => {
+            this.getNext();
+            this.drawState();
+         }, this.interval);
+      } else {
+         //restart
+         this.start();
+      }
+
+      this.drawControls();
+   }
+
+   quitButtonClick() {
+      console.log('quit button click handler');
+      this.currentState = {
+         field: {},
+         activeFigure: null,
+         score: 0,
+         breaks: 0
+      };
+      if (this.intervalId) {
+         clearInterval(this.intervalId);
+         this.intervalId = null;
+      }
+      document.removeEventListener('keydown', this.moveFigure);
+      
+      //redraw
+      this.drawScore();
+      this.drawState();
+      this.drawControls();
+   }
+
    //create wrapper & canvases in DOM
    createNodes(height) {
       let wrapper = document.createElement('div');
       wrapper.id = 'game-wrapper';
-      wrapper.style = `position: relative; border: 1px solid grey; width: ${50}px; height: ${height}px; font-family: 'Bebas Neue', cursive;`
+      wrapper.style = `position: relative; border: 1px solid rgb(128 128 128 / 32%); width: ${50}px; height: ${height}px; font-family: 'Bebas Neue', cursive; user-select: none; margin: 0 auto;`
 
       let canvas = document.createElement('canvas');
       canvas.width = '50'; //no matter
@@ -214,7 +276,7 @@ class Game {
       this.currentState.activeFigure = this.createRandomFigure();
       this.currentState.nextFigure = this.createRandomFigure();
 
-      document.addEventListener('keydown', (e) => this.moveFigure(e));
+      document.addEventListener('keydown', this.moveFigure);
 
       //first render
       this.drawState();
@@ -235,7 +297,10 @@ class Game {
       //just 4 test ; debug area border
       ctx.save()
       ctx.translate(sideAreaWidth, 0 );
-      ctx.strokeRect(0,0, mainAreaWidth, mainAreaHeight)
+
+      //test area border
+      //ctx.strokeRect(0,0, mainAreaWidth, mainAreaHeight)
+
       ctx.restore();
 
       let mainAreaX0 = sideAreaWidth;
@@ -291,6 +356,8 @@ class Game {
       this.drawGrid();
 
       //render active figure
+      if (!this.currentState.activeFigure) return ctx.restore();
+
       this.currentState.activeFigure.coords.forEach(coord => {
          let gradient = ctx.createLinearGradient((coord.x - 1) * blockWidth + blockWidth, (coord.y - 1) * blockHeight, (coord.x - 1) * blockWidth + blockWidth, (coord.y - 1) * blockHeight + blockHeight);
          gradient.addColorStop(0, adjust(this.currentState.activeFigure.color, 50));
@@ -321,10 +388,6 @@ class Game {
 
       //render game field
       this.drawField();
-
-      //render score in DOM
-      let scoreText = document.getElementById('score');
-      scoreText.textContent = this.currentState.score;
 
       //grid render in 1st step
 
@@ -370,11 +433,12 @@ class Game {
    /*------- left side ---------*/
    drawScore() {
       const { ctx, sideAreaWidth, padding, borderSize, sideAreaHeight, mainAreaWidth, mainAreaHeight, blockWidth, blockHeight } = this.canvasConfig;
-
       ctx.save();
 
       ctx.strokeStyle = '#5272ad' //'#5d87d3'
-      ctx.strokeRect(0,0, sideAreaWidth, sideAreaHeight)
+
+      //test area size border
+      //ctx.strokeRect(0,0, sideAreaWidth, sideAreaHeight)
 
       ctx.translate(0 + padding, 0 + padding);
       ctx.clearRect(0-borderSize, 0-borderSize,sideAreaWidth, sideAreaHeight - padding*2);
@@ -415,7 +479,8 @@ class Game {
       ctx.strokeRect(0, scoreBlockHeight * 3, sideAreaWidth-padding - borderSize, scoreBlockHeight*3)
 
       //set coords for next figure block
-      if (!this.currentState.nextFigure) return;
+      if (!this.currentState.nextFigure) return ctx.restore();
+
       let poinsSortedByX = this.currentState.nextFigure.coords.map(val => val.x).sort();
       let poinsSortedByY = this.currentState.nextFigure.coords.map(val => val.y).sort();
       let figureMiddleX = (poinsSortedByX[poinsSortedByX.length-1] - poinsSortedByX[0] + 1) * blockWidth / 2;
@@ -439,7 +504,7 @@ class Game {
          //ctx.fillStyle = this.currentState.activeFigure.color;
          ctx.fillRect((coord.x  - poinsSortedByX[0]) * blockWidth, (coord.y - 1) * blockHeight, blockWidth, blockHeight);
 
-         ctx.save();
+         //ctx.save();
          //test border
          let borderSize = blockWidth / 9;
          ctx.lineWidth = borderSize
@@ -454,7 +519,7 @@ class Game {
          borderGradient.addColorStop(1, adjust(this.currentState.nextFigure.color, -200));
          ctx.strokeStyle = borderGradient;
          ctx.strokeRect((coord.x - poinsSortedByX[0]) * blockWidth+borderSize, (coord.y - 1) * blockHeight+borderSize, blockWidth-(borderSize*2), blockHeight-(borderSize*2));
-         ctx.restore();
+         //ctx.restore();
       });
       
       //calibrate point
@@ -472,13 +537,13 @@ class Game {
       const controlsAreaX0 = sideAreaWidth + mainAreaWidth;
 
       //area border for DEBUG
-      ctx.strokeStyle = 'blue';
-      ctx.strokeRect(controlsAreaX0,0, sideAreaWidth, sideAreaHeight);
+      //ctx.strokeStyle = 'blue';
+      //ctx.strokeRect(controlsAreaX0,0, sideAreaWidth, sideAreaHeight);
 
       ctx.translate(controlsAreaX0 + borderSize, 0 + padding);
       //ctx.translate(canvasHeight / 2 / 2 + mainAreaWidth, 0);
 
-      ctx.clearRect(0 - borderSize, 0 - borderSize, sideAreaWidth, mainAreaHeight - padding * 2);
+      ctx.clearRect(0 - borderSize, 0 - borderSize, sideAreaWidth, mainAreaHeight - padding * 2 + borderSize*2);
 
       //ctx.beginPath();
 
@@ -497,8 +562,11 @@ class Game {
       ctx.textBaseline = "top";
       ctx.textAlign = "center";
       ctx.fillStyle = '#000';
-      //ctx.fillText(`Start`, fontPadding, fontPadding, sideAreaWidth);
-      ctx.fillText(`Start`, (sideAreaWidth/2 + fontPadding) - padding, fontPadding, sideAreaWidth);
+      //ctx.fillText(`Start`, (sideAreaWidth/2 + fontPadding) - padding, fontPadding, sideAreaWidth);
+      let buttonText = this.intervalId ? 'Pause' : 'Start';
+      if (!this.intervalId && this.currentState.activeFigure) buttonText = 'Resume';
+      if (this.currentState.gameOver) buttonText = 'Restart';
+      ctx.fillText(buttonText, (sideAreaWidth/2 + fontPadding) - padding, fontPadding, sideAreaWidth);
 
       //quit button
       if (this.controls.quitButtonActive) ctx.fillStyle = adjust('#d7deeb', -50);
@@ -515,6 +583,21 @@ class Game {
       //ctx.fillText(`Start`, fontPadding, fontPadding, sideAreaWidth);
       ctx.fillText(`Exit`, (sideAreaWidth/2 + fontPadding) - padding, fontPadding + scoreBlockHeight + padding/2, sideAreaWidth);
 
+      //draw contols help block
+      //ctx.fillStyle = '#d7deeb';
+      ctx.fillStyle = 'rgba(215, 222, 235, 0.36)';
+      //ctx.fillRect(0,(scoreBlockHeight + padding/2) * 2, sideAreaWidth-padding, scoreBlockHeight*3);
+      ctx.fillRect(0,(sideAreaHeight-padding*2 + borderSize) - scoreBlockHeight*3, sideAreaWidth-padding, scoreBlockHeight*3 - fontPadding/1.5);
+      ctx.strokeRect(0,(sideAreaHeight-padding*2 + borderSize) - scoreBlockHeight*3, sideAreaWidth-padding, scoreBlockHeight*3 - fontPadding/1.5)
+
+      //ctx.fillStyle = '#727272';
+      ctx.fillStyle = '#979797';
+      ctx.textAlign = "center";
+      ctx.fillText(`🠕 rotate`, (sideAreaWidth/2 + fontPadding) - padding, (fontPadding + (sideAreaHeight-padding*2 + borderSize) - scoreBlockHeight*3), sideAreaWidth);
+      ctx.fillText(`🠔 move left`, (sideAreaWidth/2 + fontPadding) - padding, (fontPadding + (sideAreaHeight-padding*2 + borderSize) - scoreBlockHeight*3) + fontSize, sideAreaWidth);
+      ctx.fillText(`🠖 move right`, (sideAreaWidth/2 + fontPadding) - padding, (fontPadding + (sideAreaHeight-padding*2 + borderSize) - scoreBlockHeight*3) + fontSize*2, sideAreaWidth);
+      ctx.fillText(`🠗 speed-up`, (sideAreaWidth/2 + fontPadding) - padding, (fontPadding + (sideAreaHeight-padding*2 + borderSize) - scoreBlockHeight*3) + fontSize*3, sideAreaWidth);
+      //ctx.fillText(`↓ speed-up`, 0 + fontPadding, (fontPadding + (scoreBlockHeight + padding/2) * 2) + fontSize*3, sideAreaWidth);
 
       //ctx.closePath();
       ctx.restore();
@@ -596,14 +679,20 @@ class Game {
    }
 
    checkCollision(x, y) {
-      //check collision with cup borders (only X)
+      /*return true if block have collision with cup or another block*/
+
+      //check collision with cup borders (by X)
       if (x < 1 || x > this.canvasConfig.collsCount) return true;
+      //check collision with cup borders (by X)
+      if (y < 1 || y > this.canvasConfig.rowsCount) return true;
+
       //check collision with existing blocks
       if (this.currentState.field[`${x}:${y}`]) return true;
       else return false;
    }
 
    moveFigure(e) {
+      if (!this.intervalId) return;
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
 
       let limit = false;
@@ -662,7 +751,7 @@ class Game {
          tetraLInverse: { coords: [{ x: 6, y: 1 }, { x: 4, y: 2 }, { x: 5, y: 2 }, { x: 6, y: 2 }], top: { x: 5, y: 2 } },
          tetraZ: { coords: [{ x: 4, y: 1 }, { x: 5, y: 1 }, { x: 5, y: 2 }, { x: 6, y: 2 }], top: { x: 5, y: 2 } },
          tetraS: { coords: [{ x: 6, y: 1 }, { x: 5, y: 1 }, { x: 5, y: 2 }, { x: 4, y: 2 }], top: { x: 5, y: 2 } },
-         tetraT: { coords: [{ x: 5, y: 1 }, { x: 4, y: 2 }, { x: 5, y: 2 }, { x: 6, y: 2 }], top: { x: 4, y: 2 } }
+         tetraT: { coords: [{ x: 5, y: 1 }, { x: 4, y: 2 }, { x: 5, y: 2 }, { x: 6, y: 2 }], top: { x: 5, y: 2 } }
       }
 
       //pool of available figures
@@ -688,25 +777,10 @@ class Game {
    endGame() {
       clearInterval(this.intervalId);
       this.intervalId = null;
+      this.currentState.gameOver = true;
       console.log('the end');
    }
 }
 
 
 let game = new Game();
-
-//DOM events
-let startButton = document.getElementById('start-button');
-startButton.addEventListener('click', () => {
-   game.start();
-});
-
-let logConfigButton = document.getElementById('log-config-button');
-logConfigButton.addEventListener('click', () => {
-   console.log(game.canvasConfig);
-});
-
-let showStateButton = document.getElementById('show-state');
-showStateButton.addEventListener('click', () => {
-   console.log('game.currentState: %o', game.currentState);
-});
