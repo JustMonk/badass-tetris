@@ -89,7 +89,7 @@ class Game {
 
          this.checkStartButtonHover(x,y);
          this.checkQuitButtonHover(x,y);
-      })
+      });
    }
 
    checkStartButtonHover(x,y) {
@@ -273,7 +273,7 @@ class Game {
    }
 
    drawState() {
-      const { ctx, blockWidth, blockHeight, padding, canvasWidth, canvasHeight, rowsCount, collsCount, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
+      const { ctx, blockWidth, blockHeight, borderSize, padding, canvasWidth, canvasHeight, rowsCount, collsCount, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
       //установка mainArea
       ctx.save();
 
@@ -370,13 +370,14 @@ class Game {
    /*------- left side ---------*/
    drawScore() {
       const { ctx, sideAreaWidth, padding, borderSize, sideAreaHeight, mainAreaWidth, mainAreaHeight, blockWidth, blockHeight } = this.canvasConfig;
+
       ctx.save();
 
       ctx.strokeStyle = '#5272ad' //'#5d87d3'
       ctx.strokeRect(0,0, sideAreaWidth, sideAreaHeight)
 
       ctx.translate(0 + padding, 0 + padding);
-      ctx.clearRect(0, 0,sideAreaWidth, sideAreaHeight - padding*2);
+      ctx.clearRect(0-borderSize, 0-borderSize,sideAreaWidth, sideAreaHeight - padding*2);
 
       //define text params
       let fontSize = sideAreaWidth / 8;
@@ -414,6 +415,7 @@ class Game {
       ctx.strokeRect(0, scoreBlockHeight * 3, sideAreaWidth-padding - borderSize, scoreBlockHeight*3)
 
       //set coords for next figure block
+      if (!this.currentState.nextFigure) return;
       let poinsSortedByX = this.currentState.nextFigure.coords.map(val => val.x).sort();
       let poinsSortedByY = this.currentState.nextFigure.coords.map(val => val.y).sort();
       let figureMiddleX = (poinsSortedByX[poinsSortedByX.length-1] - poinsSortedByX[0] + 1) * blockWidth / 2;
@@ -476,8 +478,7 @@ class Game {
       ctx.translate(controlsAreaX0 + borderSize, 0 + padding);
       //ctx.translate(canvasHeight / 2 / 2 + mainAreaWidth, 0);
 
-      ctx.clearRect(0, 0, sideAreaWidth, mainAreaHeight - padding * 2);
-
+      ctx.clearRect(0 - borderSize, 0 - borderSize, sideAreaWidth, mainAreaHeight - padding * 2);
 
       //ctx.beginPath();
 
