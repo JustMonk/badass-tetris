@@ -34,7 +34,7 @@ class Game {
       const canvasHeight = canvas.height;
       const padding = canvasHeight / 20;
       console.log('>> padding: %O', padding);
-      
+
       const collsCount = 10;
       const rowsCount = 20;
 
@@ -42,31 +42,36 @@ class Game {
       //const mainAreaHeight = canvasHeight - (padding * 2);
       const mainAreaHeight = canvasHeight;
       const mainAreaWidth = mainAreaHeight / 2 + padding;
-      const blockWidth = (mainAreaWidth-padding*2) / collsCount;
-      const blockHeight = (mainAreaHeight-padding*2) / rowsCount;
+      const blockWidth = (mainAreaWidth - padding * 2) / collsCount;
+      const blockHeight = (mainAreaHeight - padding * 2) / rowsCount;
       console.log('blockWidth: %o, blockHeight: %o', blockWidth, blockHeight)
 
       //Left area config
       const sideAreaHeight = canvasHeight;
       const sideAreaWidth = mainAreaWidth / 1.5;
       const fontSize = sideAreaWidth / 8;
-      const fontPadding = fontSize/2;
-      const scoreBlockHeight = fontSize + fontPadding + (fontSize/4);
+      const fontPadding = fontSize / 2;
+      const scoreBlockHeight = fontSize + fontPadding + (fontSize / 4);
       const borderSize = sideAreaWidth / 40;
 
-      let leftAreaSize = {width: sideAreaWidth, height: sideAreaHeight};
-      let mainAreaSize = {width: mainAreaWidth, height: mainAreaHeight};
-      let rightAreaSize = {width: sideAreaWidth, height: sideAreaHeight}
+      const borderColor = '#5272ad';
+      const borderColorLight = '#869cc5';
+
+      let leftAreaSize = { width: sideAreaWidth, height: sideAreaHeight };
+      let mainAreaSize = { width: mainAreaWidth, height: mainAreaHeight };
+      let rightAreaSize = { width: sideAreaWidth, height: sideAreaHeight }
       this.setupCanvas(canvas, leftAreaSize, mainAreaSize, rightAreaSize)
-      
-      this.canvasConfig = { 
+
+      this.canvasConfig = {
+         borderColorLight, borderColor,
          borderSize, fontSize, fontPadding,
          scoreBlockHeight,
          sideAreaWidth, sideAreaHeight,
-         canvas, ctx, canvasWidth, 
-         canvasHeight, padding, collsCount, 
+         canvas, ctx, canvasWidth,
+         canvasHeight, padding, collsCount,
          rowsCount, blockWidth, blockHeight,
-          mainAreaHeight, mainAreaWidth }
+         mainAreaHeight, mainAreaWidth
+      }
 
       this.currentState = {
          //an object with key-coordinates of the form '3:5' and a value with a color code from COLORS
@@ -89,8 +94,8 @@ class Game {
          let x = e.offsetX;
          let y = e.offsetY;
 
-         this.checkStartButtonHover(x,y);
-         this.checkQuitButtonHover(x,y);
+         this.checkStartButtonHover(x, y);
+         this.checkQuitButtonHover(x, y);
       });
 
       canvas.addEventListener('click', (e) => {
@@ -108,17 +113,17 @@ class Game {
          this.drawScore();
          this.drawState();
          this.drawControls();
-       });
+      });
 
-       this.moveFigure = this.moveFigure.bind(this);
+      this.moveFigure = this.moveFigure.bind(this);
    }
 
-   checkStartButtonHover(x,y) {
-      const {sideAreaWidth, mainAreaWidth, padding, scoreBlockHeight, canvas} = this.canvasConfig;
+   checkStartButtonHover(x, y) {
+      const { sideAreaWidth, mainAreaWidth, padding, scoreBlockHeight, canvas } = this.canvasConfig;
 
       let startButtonX1 = sideAreaWidth + mainAreaWidth;
       let startButtonY1 = padding;
-      let startButtonX2 = startButtonX1 + (sideAreaWidth-padding);
+      let startButtonX2 = startButtonX1 + (sideAreaWidth - padding);
       let startButtonY2 = startButtonY1 + scoreBlockHeight;
 
       if ((x >= startButtonX1 && x <= startButtonX2) && (y >= startButtonY1 && y <= startButtonY2)) {
@@ -133,12 +138,12 @@ class Game {
       }
    }
 
-   checkQuitButtonHover(x,y) {
-      const {sideAreaWidth, mainAreaWidth, padding, scoreBlockHeight, canvas} = this.canvasConfig;
+   checkQuitButtonHover(x, y) {
+      const { sideAreaWidth, mainAreaWidth, padding, scoreBlockHeight, canvas } = this.canvasConfig;
 
       let quitButtonX1 = sideAreaWidth + mainAreaWidth;
-      let quitButtonY1 = scoreBlockHeight + padding/2 + padding;
-      let quitButtonX2 = quitButtonX1 + (sideAreaWidth-padding);
+      let quitButtonY1 = scoreBlockHeight + padding / 2 + padding;
+      let quitButtonX2 = quitButtonX1 + (sideAreaWidth - padding);
       let quitButtonY2 = quitButtonY1 + scoreBlockHeight;
 
       if ((x >= quitButtonX1 && x <= quitButtonX2) && (y >= quitButtonY1 && y <= quitButtonY2)) {
@@ -187,7 +192,7 @@ class Game {
          this.intervalId = null;
       }
       document.removeEventListener('keydown', this.moveFigure);
-      
+
       //redraw
       this.drawScore();
       this.drawState();
@@ -247,11 +252,11 @@ class Game {
          bgCtx.lineCap = 'round';
 
          //bgCtx.moveTo(i * thickness + thickness / 2 - 300, 0);
-         bgCtx.moveTo(i * thickness + thickness  - width, 0);
-         bgCtx.lineTo(0 + i * thickness + thickness , width);
+         bgCtx.moveTo(i * thickness + thickness - width, 0);
+         bgCtx.lineTo(0 + i * thickness + thickness, width);
          bgCtx.stroke();
       }
-      
+
       //setup wrapper
       let wrapper = document.getElementById('game-wrapper');
       wrapper.style.width = canvasNode.width + 'px';
@@ -296,7 +301,7 @@ class Game {
 
       //just 4 test ; debug area border
       ctx.save()
-      ctx.translate(sideAreaWidth, 0 );
+      ctx.translate(sideAreaWidth, 0);
 
       //test area border
       //ctx.strokeRect(0,0, mainAreaWidth, mainAreaHeight)
@@ -313,11 +318,11 @@ class Game {
       //set bg
       ctx.save();
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.fillRect(0,0,mainAreaWidth-padding*2,mainAreaHeight-padding*2)
-      
+      ctx.fillRect(0, 0, mainAreaWidth - padding * 2, mainAreaHeight - padding * 2)
+
       ctx.lineWidth = borderSize;
       ctx.strokeStyle = "#5272ad"
-      ctx.strokeRect(0-borderSize/2,0-borderSize/2, mainAreaWidth-padding*2 + borderSize, mainAreaHeight-padding*2 + borderSize)
+      ctx.strokeRect(0 - borderSize / 2, 0 - borderSize / 2, mainAreaWidth - padding * 2 + borderSize, mainAreaHeight - padding * 2 + borderSize)
       ctx.restore();
 
       ctx.strokeStyle = 'lightgrey'
@@ -325,12 +330,12 @@ class Game {
 
       for (let i = 0; i <= collsCount; i++) {
          ctx.moveTo(blockWidth * i, 0);
-         ctx.lineTo(blockWidth * i, mainAreaHeight - padding*2);
+         ctx.lineTo(blockWidth * i, mainAreaHeight - padding * 2);
       }
 
       for (let i = 0; i <= rowsCount; i++) {
          ctx.moveTo(0, blockHeight * i);
-         ctx.lineTo(mainAreaWidth - padding*2, blockHeight * i);
+         ctx.lineTo(mainAreaWidth - padding * 2, blockHeight * i);
       }
       ctx.closePath();
       ctx.stroke();
@@ -349,7 +354,7 @@ class Game {
 
       this.setMainArea();
 
-      ctx.clearRect(0-padding, 0-padding, mainAreaWidth, mainAreaHeight);
+      ctx.clearRect(0 - padding, 0 - padding, mainAreaWidth, mainAreaHeight);
       //ctx.clearRect(0, 0, mainAreaWidth-padding*2, mainAreaHeight-padding*2);
 
       //render grid over field
@@ -373,7 +378,7 @@ class Game {
          let borderSize = blockWidth / 9;
          ctx.lineWidth = borderSize
          ctx.strokeStyle = '#323232';
-         ctx.strokeRect((coord.x - 1) * blockWidth + (borderSize/2), (coord.y - 1) * blockHeight+ (borderSize/2), blockWidth - borderSize, blockHeight- borderSize);
+         ctx.strokeRect((coord.x - 1) * blockWidth + (borderSize / 2), (coord.y - 1) * blockHeight + (borderSize / 2), blockWidth - borderSize, blockHeight - borderSize);
 
          //block light border
          //ctx.lineWidth = 3
@@ -382,7 +387,7 @@ class Game {
          borderGradient.addColorStop(.5, adjust(this.currentState.activeFigure.color, -25));
          borderGradient.addColorStop(1, adjust(this.currentState.activeFigure.color, -200));
          ctx.strokeStyle = borderGradient;
-         ctx.strokeRect((coord.x - 1) * blockWidth+borderSize, (coord.y - 1) * blockHeight+borderSize, blockWidth-(borderSize*2), blockHeight-(borderSize*2));
+         ctx.strokeRect((coord.x - 1) * blockWidth + borderSize, (coord.y - 1) * blockHeight + borderSize, blockWidth - (borderSize * 2), blockHeight - (borderSize * 2));
          ctx.restore();
       });
 
@@ -411,13 +416,13 @@ class Game {
          //ctx.fillStyle = this.currentState.field[block];
          ctx.fillRect((block.split(':')[0] - 1) * blockWidth, (block.split(':')[1] - 1) * blockHeight, blockWidth, blockHeight);
 
-         
+
          ctx.save();
          //test border
          let borderSize = blockWidth / 9;
          ctx.lineWidth = borderSize
          ctx.strokeStyle = '#323232';
-         ctx.strokeRect((blockX - 1) * blockWidth + (borderSize/2), (blockY - 1) * blockHeight+ (borderSize/2), blockWidth-borderSize, blockHeight-borderSize);
+         ctx.strokeRect((blockX - 1) * blockWidth + (borderSize / 2), (blockY - 1) * blockHeight + (borderSize / 2), blockWidth - borderSize, blockHeight - borderSize);
 
          //block light border
          let borderGradient = ctx.createLinearGradient((blockX - 1) * blockWidth, (blockY - 1) * blockHeight, (blockX - 1) * blockWidth + blockWidth, (blockY - 1) * blockHeight + blockHeight);
@@ -425,7 +430,7 @@ class Game {
          borderGradient.addColorStop(.5, adjust(this.currentState.field[block], -25));
          borderGradient.addColorStop(1, adjust(this.currentState.field[block], -200));
          ctx.strokeStyle = borderGradient;
-         ctx.strokeRect((blockX - 1) * blockWidth+borderSize, (blockY - 1) * blockHeight+borderSize, blockWidth-(borderSize*2), blockHeight-(borderSize*2));
+         ctx.strokeRect((blockX - 1) * blockWidth + borderSize, (blockY - 1) * blockHeight + borderSize, blockWidth - (borderSize * 2), blockHeight - (borderSize * 2));
          ctx.restore();
       });
    }
@@ -441,58 +446,60 @@ class Game {
       //ctx.strokeRect(0,0, sideAreaWidth, sideAreaHeight)
 
       ctx.translate(0 + padding, 0 + padding);
-      ctx.clearRect(0-borderSize, 0-borderSize,sideAreaWidth, sideAreaHeight - padding*2);
+      ctx.clearRect(0 - borderSize, 0 - borderSize, sideAreaWidth, sideAreaHeight - padding * 2);
 
       //define text params
       let fontSize = sideAreaWidth / 8;
-      let fontPadding = fontSize/2;
-      let scoreBlockHeight = fontSize + fontPadding + (fontSize/4);
+      let fontPadding = fontSize / 2;
+      let scoreBlockHeight = fontSize + fontPadding + (fontSize / 4);
 
       //score border
       ctx.lineWidth = sideAreaWidth / 40;
       ctx.fillStyle = '#d7deeb'
-      ctx.fillRect(0,0,sideAreaWidth-padding - borderSize, fontSize + fontPadding + (fontSize/4))
-      ctx.strokeRect(0,0,sideAreaWidth-padding - borderSize, fontSize + fontPadding + (fontSize/4))
+      ctx.fillRect(0, 0, sideAreaWidth - padding - borderSize, fontSize + fontPadding + (fontSize / 4))
+      ctx.strokeRect(0, 0, sideAreaWidth - padding - borderSize, fontSize + fontPadding + (fontSize / 4))
       //score text
       ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
       //ctx.font = "19px serif";
       ctx.textBaseline = "top";
       //ctx.fillStyle = 'black'
       ctx.fillStyle = '#425b8b' //'#6185c7'
-      ctx.fillText(`Score: ${this.currentState.score}`, fontPadding, fontSize/2, sideAreaWidth);
+      ctx.fillText(`Score: ${this.currentState.score}`, fontPadding, fontSize / 2, sideAreaWidth);
 
       //lines border
       ctx.fillStyle = '#d7deeb'
-      ctx.fillRect(0, fontSize + fontPadding + (fontSize/4), sideAreaWidth-padding - borderSize, fontSize + fontPadding + (fontSize/4))
-      ctx.strokeRect(0, fontSize + fontPadding + (fontSize/4),sideAreaWidth-padding - borderSize, fontSize + fontPadding + (fontSize/4))
+      ctx.fillRect(0, fontSize + fontPadding + (fontSize / 4), sideAreaWidth - padding - borderSize, fontSize + fontPadding + (fontSize / 4))
+      ctx.strokeRect(0, fontSize + fontPadding + (fontSize / 4), sideAreaWidth - padding - borderSize, fontSize + fontPadding + (fontSize / 4))
       //lines text
       ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
       //ctx.font = "19px serif";
       ctx.textBaseline = "top";
       //ctx.fillStyle = 'black'
       ctx.fillStyle = '#425b8b'
-      ctx.fillText(`Breaks: ${this.currentState.breaks}`, fontPadding, fontSize + fontPadding + (fontSize/4) + fontSize/2, sideAreaWidth);
+      ctx.fillText(`Breaks: ${this.currentState.breaks}`, fontPadding, fontSize + fontPadding + (fontSize / 4) + fontSize / 2, sideAreaWidth);
 
       //next figure block
-      ctx.fillStyle = '#d7deeb'
-      ctx.fillRect(0, scoreBlockHeight * 3, sideAreaWidth-padding - borderSize, scoreBlockHeight*3)
-      ctx.strokeRect(0, scoreBlockHeight * 3, sideAreaWidth-padding - borderSize, scoreBlockHeight*3)
+      //ctx.fillStyle = '#d7deeb'
+      ctx.fillStyle = 'rgba(215, 222, 235, 0.36)';
+      ctx.fillRect(0, scoreBlockHeight * 3, sideAreaWidth - padding - borderSize, scoreBlockHeight * 3);
+      ctx.strokeStyle = '#869cc5' //'#7a94c5'; //nextfigure border
+      ctx.strokeRect(0, scoreBlockHeight * 3, sideAreaWidth - padding - borderSize, scoreBlockHeight * 3)
 
       //set coords for next figure block
       if (!this.currentState.nextFigure) return ctx.restore();
 
       let poinsSortedByX = this.currentState.nextFigure.coords.map(val => val.x).sort();
       let poinsSortedByY = this.currentState.nextFigure.coords.map(val => val.y).sort();
-      let figureMiddleX = (poinsSortedByX[poinsSortedByX.length-1] - poinsSortedByX[0] + 1) * blockWidth / 2;
-      let figureMiddleY = (poinsSortedByY[poinsSortedByX.length-1] - poinsSortedByY[0] + 1) * blockHeight / 2;
+      let figureMiddleX = (poinsSortedByX[poinsSortedByX.length - 1] - poinsSortedByX[0] + 1) * blockWidth / 2;
+      let figureMiddleY = (poinsSortedByY[poinsSortedByX.length - 1] - poinsSortedByY[0] + 1) * blockHeight / 2;
 
-      let areaMiddleX = (sideAreaWidth-padding-borderSize) / 2;
-      let areaMiddleY = (scoreBlockHeight*3) / 2;
+      let areaMiddleX = (sideAreaWidth - padding - borderSize) / 2;
+      let areaMiddleY = (scoreBlockHeight * 3) / 2;
 
       //TODO: Корявое позиционирование по Y
       //ctx.translate(areaMiddleX - figureMiddleX , scoreBlockHeight * 3 + (scoreBlockHeight * 3 / 2 - blockHeight /2));
       // /*v2*/ ctx.translate(areaMiddleX - figureMiddleX, scoreBlockHeight * 3 + areaMiddleY - figureMiddleY /2)
-      ctx.translate(areaMiddleX - figureMiddleX, scoreBlockHeight * 3 + areaMiddleY - figureMiddleY );
+      ctx.translate(areaMiddleX - figureMiddleX, scoreBlockHeight * 3 + areaMiddleY - figureMiddleY);
 
       this.currentState.nextFigure.coords.forEach(coord => {
          let gradient = ctx.createLinearGradient((coord.x - 1) * blockWidth + blockWidth, (coord.y - 1) * blockHeight, (coord.x - 1) * blockWidth + blockWidth, (coord.y - 1) * blockHeight + blockHeight);
@@ -502,14 +509,14 @@ class Game {
 
          ctx.fillStyle = gradient;
          //ctx.fillStyle = this.currentState.activeFigure.color;
-         ctx.fillRect((coord.x  - poinsSortedByX[0]) * blockWidth, (coord.y - 1) * blockHeight, blockWidth, blockHeight);
+         ctx.fillRect((coord.x - poinsSortedByX[0]) * blockWidth, (coord.y - 1) * blockHeight, blockWidth, blockHeight);
 
          //ctx.save();
          //test border
          let borderSize = blockWidth / 9;
          ctx.lineWidth = borderSize
          ctx.strokeStyle = '#323232';
-         ctx.strokeRect((coord.x - poinsSortedByX[0]) * blockWidth + (borderSize/2), (coord.y - 1) * blockHeight+ (borderSize/2), blockWidth - borderSize, blockHeight- borderSize);
+         ctx.strokeRect((coord.x - poinsSortedByX[0]) * blockWidth + (borderSize / 2), (coord.y - 1) * blockHeight + (borderSize / 2), blockWidth - borderSize, blockHeight - borderSize);
 
          //block light border
          //ctx.lineWidth = 3
@@ -518,10 +525,10 @@ class Game {
          borderGradient.addColorStop(.5, adjust(this.currentState.nextFigure.color, -25));
          borderGradient.addColorStop(1, adjust(this.currentState.nextFigure.color, -200));
          ctx.strokeStyle = borderGradient;
-         ctx.strokeRect((coord.x - poinsSortedByX[0]) * blockWidth+borderSize, (coord.y - 1) * blockHeight+borderSize, blockWidth-(borderSize*2), blockHeight-(borderSize*2));
+         ctx.strokeRect((coord.x - poinsSortedByX[0]) * blockWidth + borderSize, (coord.y - 1) * blockHeight + borderSize, blockWidth - (borderSize * 2), blockHeight - (borderSize * 2));
          //ctx.restore();
       });
-      
+
       //calibrate point
       //ctx.strokeStyle = 'black';
       //ctx.strokeRect(0,0, 25,25)
@@ -531,7 +538,7 @@ class Game {
 
    /*------ controls (right side) -------*/
    drawControls() {
-      const { ctx, sideAreaWidth, scoreBlockHeight, borderSize, fontSize, fontPadding, sideAreaHeight, canvasHeight, padding, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
+      const { ctx, borderColorLight, sideAreaWidth, scoreBlockHeight, borderSize, fontSize, fontPadding, sideAreaHeight, canvasHeight, padding, mainAreaWidth, mainAreaHeight } = this.canvasConfig;
       ctx.save();
 
       const controlsAreaX0 = sideAreaWidth + mainAreaWidth;
@@ -543,7 +550,7 @@ class Game {
       ctx.translate(controlsAreaX0 + borderSize, 0 + padding);
       //ctx.translate(canvasHeight / 2 / 2 + mainAreaWidth, 0);
 
-      ctx.clearRect(0 - borderSize, 0 - borderSize, sideAreaWidth, mainAreaHeight - padding * 2 + borderSize*2);
+      ctx.clearRect(0 - borderSize, 0 - borderSize, sideAreaWidth, mainAreaHeight - padding * 2 + borderSize * 2);
 
       //ctx.beginPath();
 
@@ -555,8 +562,8 @@ class Game {
       //start button border
       ctx.lineWidth = borderSize;
       ctx.strokeStyle = '#5272ad' //'#5d87d3'
-      ctx.fillRect(0,0,sideAreaWidth-padding, scoreBlockHeight)
-      ctx.strokeRect(0,0,sideAreaWidth-padding, scoreBlockHeight)
+      ctx.fillRect(0, 0, sideAreaWidth - padding, scoreBlockHeight)
+      ctx.strokeRect(0, 0, sideAreaWidth - padding, scoreBlockHeight)
       //>> start button text
       ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
       ctx.textBaseline = "top";
@@ -566,37 +573,38 @@ class Game {
       let buttonText = this.intervalId ? 'Pause' : 'Start';
       if (!this.intervalId && this.currentState.activeFigure) buttonText = 'Resume';
       if (this.currentState.gameOver) buttonText = 'Restart';
-      ctx.fillText(buttonText, (sideAreaWidth/2 + fontPadding) - padding, fontPadding, sideAreaWidth);
+      ctx.fillText(buttonText, (sideAreaWidth / 2 + fontPadding) - padding, fontPadding, sideAreaWidth);
 
       //quit button
       if (this.controls.quitButtonActive) ctx.fillStyle = adjust('#d7deeb', -50);
       else ctx.fillStyle = '#d7deeb';
       //quitButton border
       ctx.strokeStyle = '#5272ad' //'#5d87d3'
-      ctx.fillRect(0,scoreBlockHeight + padding/2, sideAreaWidth-padding, scoreBlockHeight)
-      ctx.strokeRect(0,scoreBlockHeight + padding/2, sideAreaWidth-padding, scoreBlockHeight)
+      ctx.fillRect(0, scoreBlockHeight + padding / 2, sideAreaWidth - padding, scoreBlockHeight)
+      ctx.strokeRect(0, scoreBlockHeight + padding / 2, sideAreaWidth - padding, scoreBlockHeight)
       //>> quit button text
       ctx.font = `${fontSize}px Bebas Neue` //"19px serif";
       ctx.textBaseline = "top";
       ctx.textAlign = "center";
       ctx.fillStyle = '#000';
       //ctx.fillText(`Start`, fontPadding, fontPadding, sideAreaWidth);
-      ctx.fillText(`Exit`, (sideAreaWidth/2 + fontPadding) - padding, fontPadding + scoreBlockHeight + padding/2, sideAreaWidth);
+      ctx.fillText(`Exit`, (sideAreaWidth / 2 + fontPadding) - padding, fontPadding + scoreBlockHeight + padding / 2, sideAreaWidth);
 
       //draw contols help block
       //ctx.fillStyle = '#d7deeb';
+      ctx.strokeStyle = borderColorLight;
       ctx.fillStyle = 'rgba(215, 222, 235, 0.36)';
       //ctx.fillRect(0,(scoreBlockHeight + padding/2) * 2, sideAreaWidth-padding, scoreBlockHeight*3);
-      ctx.fillRect(0,(sideAreaHeight-padding*2 + borderSize) - scoreBlockHeight*3, sideAreaWidth-padding, scoreBlockHeight*3 - fontPadding/1.5);
-      ctx.strokeRect(0,(sideAreaHeight-padding*2 + borderSize) - scoreBlockHeight*3, sideAreaWidth-padding, scoreBlockHeight*3 - fontPadding/1.5)
+      ctx.fillRect(0, (sideAreaHeight - padding * 2 + borderSize) - scoreBlockHeight * 3, sideAreaWidth - padding, scoreBlockHeight * 3 - fontPadding / 1.5);
+      ctx.strokeRect(0, (sideAreaHeight - padding * 2 + borderSize) - scoreBlockHeight * 3, sideAreaWidth - padding, scoreBlockHeight * 3 - fontPadding / 1.5)
 
       //ctx.fillStyle = '#727272';
       ctx.fillStyle = '#979797';
       ctx.textAlign = "center";
-      ctx.fillText(`🠕 rotate`, (sideAreaWidth/2 + fontPadding) - padding, (fontPadding + (sideAreaHeight-padding*2 + borderSize) - scoreBlockHeight*3), sideAreaWidth);
-      ctx.fillText(`🠔 move left`, (sideAreaWidth/2 + fontPadding) - padding, (fontPadding + (sideAreaHeight-padding*2 + borderSize) - scoreBlockHeight*3) + fontSize, sideAreaWidth);
-      ctx.fillText(`🠖 move right`, (sideAreaWidth/2 + fontPadding) - padding, (fontPadding + (sideAreaHeight-padding*2 + borderSize) - scoreBlockHeight*3) + fontSize*2, sideAreaWidth);
-      ctx.fillText(`🠗 speed-up`, (sideAreaWidth/2 + fontPadding) - padding, (fontPadding + (sideAreaHeight-padding*2 + borderSize) - scoreBlockHeight*3) + fontSize*3, sideAreaWidth);
+      ctx.fillText(`🠕 rotate`, (sideAreaWidth / 2 + fontPadding) - padding, (fontPadding + (sideAreaHeight - padding * 2 + borderSize) - scoreBlockHeight * 3), sideAreaWidth);
+      ctx.fillText(`🠔 move left`, (sideAreaWidth / 2 + fontPadding) - padding, (fontPadding + (sideAreaHeight - padding * 2 + borderSize) - scoreBlockHeight * 3) + fontSize, sideAreaWidth);
+      ctx.fillText(`🠖 move right`, (sideAreaWidth / 2 + fontPadding) - padding, (fontPadding + (sideAreaHeight - padding * 2 + borderSize) - scoreBlockHeight * 3) + fontSize * 2, sideAreaWidth);
+      ctx.fillText(`🠗 speed-up`, (sideAreaWidth / 2 + fontPadding) - padding, (fontPadding + (sideAreaHeight - padding * 2 + borderSize) - scoreBlockHeight * 3) + fontSize * 3, sideAreaWidth);
       //ctx.fillText(`↓ speed-up`, 0 + fontPadding, (fontPadding + (scoreBlockHeight + padding/2) * 2) + fontSize*3, sideAreaWidth);
 
       //ctx.closePath();
@@ -616,6 +624,11 @@ class Game {
          if (this.checkCollision(coord.x, coord.y + 1)) return true;
       });
 
+      if (!isTouched) {
+         nextState.activeFigure.coords = nextState.activeFigure.coords.map(val => ({ x: val.x, y: val.y + 1 }));
+         if (nextState.activeFigure.top) nextState.activeFigure.top.y += 1;
+      }
+
       if (isTouched) {
          nextState.activeFigure.coords.forEach(coord => {
             nextState.field[`${coord.x}:${coord.y}`] = nextState.activeFigure.color;
@@ -628,9 +641,6 @@ class Game {
          //endgame check
          let isStacked = nextState.activeFigure.coords.some(coord => this.checkCollision(coord.x, coord.y));
          if (isStacked) this.endGame();
-      } else {
-         nextState.activeFigure.coords = nextState.activeFigure.coords.map(val => ({ x: val.x, y: val.y + 1 }));
-         if (nextState.activeFigure.top) nextState.activeFigure.top.y += 1;
       }
 
       nextState.score++;
@@ -655,6 +665,7 @@ class Game {
             //copy current field
             let fieldWithOffset = Object.assign({}, this.currentState.field);
 
+            /*Далее очень сложный алгоритм: сначала получаем все вышестоящие, затем убираем их из текущего, потом добавляем со смещением вниз*/
             //filter the array of occurrences where y < i
             let upstreamBlocks = Object.entries(this.currentState.field).filter(val => +val[0].split(':')[1] < i);
 
@@ -740,6 +751,7 @@ class Game {
          if (!limit) this.currentState.activeFigure.coords = movedCoords;
       }
 
+      e.preventDefault();
       this.drawState();
    }
 
@@ -755,8 +767,8 @@ class Game {
       }
 
       //pool of available figures
-      const figuresList = [figures.line, figures.square, figures.tetraL, figures.tetraLInverse, figures.tetraZ, figures.tetraS, figures.tetraT];
-      //const figuresList = [figures.line]
+      //const figuresList = [figures.line, figures.square, figures.tetraL, figures.tetraLInverse, figures.tetraZ, figures.tetraS, figures.tetraT];
+      const figuresList = [figures.line]
 
       //not beauty but it ok
       let figure = figuresList[randomInteger(0, figuresList.length - 1)];
