@@ -6,7 +6,8 @@
    <meta http-equiv="X-UA-Compatible" content="IE=edge">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <link rel="stylesheet" href="./style.css"></link>
-   <title>badass tetris</title>
+   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>🌟</text></svg>">
+   <title>Badass tetris - demo</title>
    <link rel="preconnect" href="https://fonts.googleapis.com">
    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -15,20 +16,20 @@
 <body>
    <header class="page-header">
       <h1 class="title">Badass tetris</h1>
-      <h2 class="subtitle">Funmade implementation of classic game. Enjoy! (and dont look at boilerplate)</h2>
+      <h2 class="subtitle">Funmade implementation of classic game. Enjoy it! (and dont look at boilerplate)</h2>
       <div>
-         <a class="link-button" href="https://github.com/JustMonk/badass-tetris">View ob GitHub</a>
+         <a class="link-button" href="https://github.com/JustMonk/badass-tetris">View on GitHub</a>
       </div>
    </header>
-   
 
-   <div class="wrapper">
 
-      <!-- w200 x h400 -->
-      <!--<canvas id="canvas" width="50" height="400" style="border: 1px solid grey;">browser does not support canvas tag</canvas>-->
-   </div>
+   <div class="controls-wrapper">
+      <div>💻 Resolution: <span id="resolution-value">770x600</span></div>
+      <div>
+         <input id="resolution-slider" type="range" step="10" min="10" max="1000">
+      </div>
 
-   <script src="./script.js"></script>
+      <script src="./script.min.js"></script>
 </body>
 
 </html>
